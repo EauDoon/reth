@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111421">
+<title>Reth crate atlas · EauDoon</title>
+<style>
+:root {
+  color-scheme: dark;
+  --paper: #111421;
+  --ink: #f1f3fa;
+  --muted: #abb2c6;
+  --rule: #374057;
+  --ice: #8edfd7;
+  --violet: #c2b4ff;
+  --coral: #ffb293;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); }
+main { max-width: 1240px; margin: auto; padding: 24px clamp(16px, 5vw, 66px) 60px; }
+a { color: var(--ice); text-underline-offset: 3px; }
+a:hover { color: white; }
+header, .toolbar, .tools, .controls, .legend { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+header { justify-content: space-between; border-bottom: 1px solid var(--rule); padding: 0 0 16px; }
+header a { text-decoration: none; }
+.mark, .eyebrow, .meta, .legend, .tag, code { font-family: "SFMono-Regular", Consolas, monospace; }
+.mark { display: flex; gap: 10px; align-items: center; color: var(--ink); }
+.mark svg { width: 26px; height: 28px; }
+.mark strong { font-size: 1.15rem; }
+.mark span { color: var(--muted); }
+h1 { margin: 28px 0 8px; font-size: clamp(2.6rem, 6vw, 5rem); letter-spacing: -.065em; line-height: 1; }
+h1 em { color: var(--violet); font-style: normal; }
+.intro { color: var(--muted); font-size: 1.05rem; line-height: 1.55; max-width: 65ch; margin: 0 0 22px; }
+.eyebrow, .meta { color: var(--muted); font-size: .8rem; line-height: 1.6; }
+.explorer { border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; background: #161a2b; }
+.toolbar { padding: 13px 16px; justify-content: space-between; border-bottom: 1px solid var(--rule); }
+label { font-size: .88rem; font-weight: 600; }
+select, button { font: inherit; border: 1px solid #565f79; background: #20253b; color: var(--ink); border-radius: 7px; min-height: 44px; padding: 6px 12px; }
+button { cursor: pointer; }
+button:hover, select:hover { background: #323953; }
+:focus-visible { outline: 3px solid #f4cf7e; outline-offset: 3px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 27%); }
+.visual { min-width: 0; position: relative; background: radial-gradient(ellipse at 45% 48%, #35304e 0, #202237 38%, #121622 80%); }
+#scene { display: block; width: 100%; height: auto; touch-action: pan-y; user-select: none; cursor: grab; }
+#scene:active { cursor: grabbing; }
+#scene:focus-visible { outline-offset: -4px; }
+.controls { padding: 8px 12px 12px; }
+.controls button { font-size: .83rem; }
+.legend { padding: 10px 16px; margin: 0; font-size: .77rem; gap: 14px; color: var(--muted); }
+.legend span::before { content:""; display:inline-block; margin-right:6px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+.detail { padding: 18px; border-left: 1px solid var(--rule); overflow-wrap: anywhere; }
+.detail h2 { font-size: clamp(1.3rem, 2.2vw, 1.8rem); line-height: 1.15; letter-spacing: -.04em; margin: 10px 0 4px; }
+.detail p { font-size: .94rem; line-height: 1.5; color: var(--muted); }
+.detail h3 { font-size: .85rem; margin: 22px 0 5px; }
+.detail ul { margin: 0; padding-left: 1.2em; line-height: 1.8; font-size: .89rem; }
+.detail .tag { color: var(--ice); font-size: .8rem; }
+.graph-node { cursor: pointer; }
+.graph-label { font: 600 14px system-ui,sans-serif; fill: #f3f2fa; paint-order: stroke; stroke: #181b2d; stroke-width: 4px; stroke-linejoin: round; }
+#scene .disc { stroke: #141928; stroke-width: 2px; }
+#scene .wire { fill: none; stroke-width: 1.2; stroke: #8089a8; opacity: .26; }
+#scene .wire.hot { stroke: var(--ice); opacity: .9; stroke-width: 1.9; }
+details { margin-top: 18px; border: 1px solid var(--rule); border-radius: 10px; padding: 13px 16px; }
+summary { cursor: pointer; font-weight: 600; line-height: 1.6; }
+details p { color: var(--muted); line-height: 1.5; }
+.catalog { list-style: none; padding: 0; }
+.catalog > li { display: grid; grid-template-columns: minmax(120px, .85fr) 2fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--rule); align-items: baseline; }
+.catalog p { margin: 0; }
+.catalog small { display: block; margin-top: 4px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.55; }
+pre { overflow: auto; max-height: 25rem; background:#0d101b; border-radius: 6px; padding:14px; font-size: .83rem; }
+[hidden] { display: none !important; }
+footer { margin-top: 28px; }
+@media (max-width: 780px) {
+  .layout { grid-template-columns: 1fr; }
+  .detail { border-left: 0; border-top: 1px solid var(--rule); }
+  .detail h3 { margin-top: 12px; }
+}
+@media (max-width: 540px) {
+  main { padding: 16px 12px 40px; }
+  h1 { margin-top: 24px; }
+  .toolbar { align-items: flex-start; }
+  .tools { flex: 1; }
+  select { width: 100%; }
+  .legend { gap: 10px; }
+  .catalog > li { grid-template-columns: 1fr; gap: 4px; }
+  .graph-label { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <a class="mark" href="https://github.com/EauDoon/reth" aria-label="EauDoon reth repository"><svg viewBox="0 0 28 28" aria-hidden="true"><path fill="none" stroke="#c2b4ff" stroke-width="2.4" d="m14 2 11 6-11 6L3 8Zm-11 12 11 6 11-6M3 20l11 6 11-6"/></svg><strong>reth</strong><span>/ EauDoon</span></a>
+  <a href="#catalog">Crate index ↓</a>
+</header>
+<h1>Reth <em>crate atlas.</em></h1>
+<p class="intro">Trace direct Rust dependencies from the command-line entry point to the Ethereum node, its services and its storage interfaces.</p>
+<section class="explorer" id="explorer" hidden aria-label="Interactive crate explorer">
+  <div class="toolbar"><div class="tools"><label for="picker">Inspect a crate</label><select id="picker"></select></div><span class="meta">11 crates · 29 dependencies</span></div>
+  <div class="layout">
+    <div class="visual">
+      <p class="legend"><span style="--accent:var(--violet)">Assembly</span><span style="--accent:var(--coral)">Services</span><span style="--accent:var(--ice)">State</span></p>
+      <svg id="scene" viewBox="0 0 640 360" role="img" tabindex="0" aria-label="3D crate dependencies. Drag or use arrow keys to rotate. Use the crate selector to inspect a node."><g id="drawing"></g></svg>
+      <div class="controls" role="group" aria-label="Graph view"><button type="button" id="left" aria-label="Rotate left">↶ Left</button><button type="button" id="right" aria-label="Rotate right">Right ↷</button><button type="button" id="reset">Reset view</button></div>
+    </div>
+    <aside class="detail" aria-label="Selected crate">
+      <span class="tag" id="layer"></span><h2 id="name"></h2><code id="package-name"></code>
+      <p id="description"></p><a id="manifest">Open Cargo.toml ↗</a>
+      <h3>Depends on</h3><ul id="dependencies"></ul>
+      <h3>Used by</h3><ul id="dependents"></ul>
+    </aside>
+  </div>
+</section>
+<details id="catalog" open>
+  <summary>Crate index and source manifests</summary>
+  <p>Each entry lists direct normal dependencies within these eleven selected crates, including optional declarations. Open a manifest to see its full feature and dependency lists.</p>
+  <ul class="catalog">
+    <li id="reth" data-crate="reth" data-group="Assembly" data-position="-135 -109 36">
+      <strong class="crate-label">CLI</strong><div><p class="description">Starts the Ethereum client and exposes its command-line interface.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/bin/reth/Cargo.toml">reth manifest</a> · Depends on <a class="dependency" href="#reth-network">reth-network</a>, <a class="dependency" href="#reth-node-builder">reth-node-builder</a>, <a class="dependency" href="#reth-node-ethereum">reth-node-ethereum</a>, <a class="dependency" href="#reth-provider">reth-provider</a>, <a class="dependency" href="#reth-rpc-builder">reth-rpc-builder</a>.</small></div>
+    </li>
+    <li id="reth-node-ethereum" data-crate="reth-node-ethereum" data-group="Assembly" data-position="67 -112 -35">
+      <strong class="crate-label">Ethereum node</strong><div><p class="description">Supplies Ethereum-specific components to the node builder.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/ethereum/node/Cargo.toml">reth-node-ethereum manifest</a> · Depends on <a class="dependency" href="#reth-evm">reth-evm</a>, <a class="dependency" href="#reth-network">reth-network</a>, <a class="dependency" href="#reth-node-builder">reth-node-builder</a>, <a class="dependency" href="#reth-provider">reth-provider</a>, <a class="dependency" href="#reth-rpc-builder">reth-rpc-builder</a>.</small></div>
+    </li>
+    <li id="reth-node-builder" data-crate="reth-node-builder" data-group="Assembly" data-position="-34 -51 16">
+      <strong class="crate-label">Node builder</strong><div><p class="description">Assembles services, providers and the engine into a runnable node.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/node/builder/Cargo.toml">reth-node-builder manifest</a> · Depends on <a class="dependency" href="#reth-db-api">reth-db-api</a>, <a class="dependency" href="#reth-engine-tree">reth-engine-tree</a>, <a class="dependency" href="#reth-evm">reth-evm</a>, <a class="dependency" href="#reth-network">reth-network</a>, <a class="dependency" href="#reth-provider">reth-provider</a>, <a class="dependency" href="#reth-rpc-builder">reth-rpc-builder</a>, <a class="dependency" href="#reth-stages">reth-stages</a>.</small></div>
+    </li>
+    <li id="reth-network" data-crate="reth-network" data-group="Services" data-position="-215 -12 -36">
+      <strong class="crate-label">Network</strong><div><p class="description">Manages peer connections, sessions and Ethereum protocol traffic.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/net/network/Cargo.toml">reth-network manifest</a> · Depends on <a class="dependency" href="#reth-evm">reth-evm</a>.</small></div>
+    </li>
+    <li id="reth-rpc-builder" data-crate="reth-rpc-builder" data-group="Services" data-position="197 -13 -24">
+      <strong class="crate-label">RPC builder</strong><div><p class="description">Assembles RPC modules and their transports.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/rpc/rpc-builder/Cargo.toml">reth-rpc-builder manifest</a> · Depends on <a class="dependency" href="#reth-evm">reth-evm</a>.</small></div>
+    </li>
+    <li id="reth-engine-tree" data-crate="reth-engine-tree" data-group="Services" data-position="76 23 52">
+      <strong class="crate-label">Engine tree</strong><div><p class="description">Processes engine requests and tracks recent blocks before persistence.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/engine/tree/Cargo.toml">reth-engine-tree manifest</a> · Depends on <a class="dependency" href="#reth-evm">reth-evm</a>, <a class="dependency" href="#reth-provider">reth-provider</a>, <a class="dependency" href="#reth-stages">reth-stages</a>, <a class="dependency" href="#reth-trie">reth-trie</a>.</small></div>
+    </li>
+    <li id="reth-stages" data-crate="reth-stages" data-group="Services" data-position="-104 41 -66">
+      <strong class="crate-label">Sync stages</strong><div><p class="description">Provides the stages used to download, execute and index historical blocks.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/stages/stages/Cargo.toml">reth-stages manifest</a> · Depends on <a class="dependency" href="#reth-db-api">reth-db-api</a>, <a class="dependency" href="#reth-evm">reth-evm</a>, <a class="dependency" href="#reth-provider">reth-provider</a>, <a class="dependency" href="#reth-trie">reth-trie</a>.</small></div>
+    </li>
+    <li id="reth-provider" data-crate="reth-provider" data-group="State" data-position="0 82 48">
+      <strong class="crate-label">Provider</strong><div><p class="description">Gives higher-level components access to block and state data.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/storage/provider/Cargo.toml">reth-provider manifest</a> · Depends on <a class="dependency" href="#reth-db-api">reth-db-api</a>, <a class="dependency" href="#reth-trie">reth-trie</a>.</small></div>
+    </li>
+    <li id="reth-evm" data-crate="reth-evm" data-group="State" data-position="203 90 -46">
+      <strong class="crate-label">EVM</strong><div><p class="description">Defines execution configuration and block-executor abstractions.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/evm/evm/Cargo.toml">reth-evm manifest</a> · Depends on no other selected crate.</small></div>
+    </li>
+    <li id="reth-db-api" data-crate="reth-db-api" data-group="State" data-position="-194 107 -18">
+      <strong class="crate-label">Database API</strong><div><p class="description">Defines database traits, transactions, tables and cursor interfaces.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/storage/db-api/Cargo.toml">reth-db-api manifest</a> · Depends on no other selected crate.</small></div>
+    </li>
+    <li id="reth-trie" data-crate="reth-trie" data-group="State" data-position="109 140 -35">
+      <strong class="crate-label">Trie</strong><div><p class="description">Computes trie hashes and state roots from account and storage data.</p>
+      <small><a class="source" href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/crates/trie/trie/Cargo.toml">reth-trie manifest</a> · Depends on no other selected crate.</small></div>
+    </li>
+  </ul>
+</details>
+<details id="query" hidden>
+  <summary>Inspect the selected crate as JSON</summary>
+  <p>This fixed read-only query runs against the catalog embedded in this page. Selecting a crate updates the response.</p>
+  <pre aria-label="Query shape">query Crate($id: ID!) {
+  crate(id: $id) {
+    id
+    manifestUrl
+    dependencies { id }
+    dependents { id }
+  }
+}</pre>
+  <button id="download" type="button">Download response</button>
+  <pre id="response" aria-label="Query response"></pre>
+</details>
+<footer class="meta">Dependency snapshot from <a href="https://github.com/EauDoon/reth/tree/a3eea4364185db4df75f9ea0c1661e18cc8f8a01">reth@a3eea436</a>. <a href="https://github.com/EauDoon/reth/blob/a3eea4364185db4df75f9ea0c1661e18cc8f8a01/docs/repo/layout.md">Full project layout ↗</a></footer>
+</main>
+<script>
+(() => {
+  "use strict";
+  const get = id => document.getElementById(id);
+  const crates = Array.from(document.querySelectorAll(".catalog > li"), row => ({
+    id: row.dataset.crate,
+    name: row.querySelector(".crate-label").textContent,
+    group: row.dataset.group,
+    description: row.querySelector(".description").textContent,
+    manifestUrl: row.querySelector(".source").href,
+    coordinates: row.dataset.position.split(" ").map(Number),
+    dependencies: Array.from(row.querySelectorAll(".dependency"), link => link.hash.slice(1))
+  }));
+  const byId = new Map(crates.map(crate => [crate.id, crate]));
+  const colors = { Assembly: "#c2b4ff", Services: "#ffb293", State: "#8edfd7" };
+  const scene = get("scene");
+  const picker = get("picker");
+  const home = { yaw: -.08, pitch: .12 };
+  let view = { ...home };
+  let selected;
+  let pointer;
+  const ns = "http://www.w3.org/2000/svg";
+
+  function svgElement(tag, attrs, parent) {
+    const element = document.createElementNS(ns, tag);
+    for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, value);
+    parent.append(element);
+    return element;
+  }
+
+  function project([x, y, z]) {
+    const lateral = x * Math.cos(view.yaw) - z * Math.sin(view.yaw);
+    const depth = x * Math.sin(view.yaw) + z * Math.cos(view.yaw);
+    const vertical = y * Math.cos(view.pitch) - depth * Math.sin(view.pitch);
+    const distance = depth * Math.cos(view.pitch) + y * Math.sin(view.pitch);
+    const scale = 810 / (810 - distance);
+    return { x: 320 + lateral * scale, y: 165 + vertical * scale, scale, depth: distance };
+  }
+
+  function draw() {
+    const drawing = document.createDocumentFragment();
+    const positions = new Map(crates.map(crate => [crate.id, project(crate.coordinates)]));
+    for (const radius of [80, 152, 223]) {
+      const points = Array.from({ length: 73 }, (_, index) => {
+        const theta = index * Math.PI / 36;
+        const p = project([radius * Math.cos(theta), 95, radius * Math.sin(theta)]);
+        return p.x + "," + p.y;
+      });
+      svgElement("polyline", { points: points.join(" "), fill: "none", stroke: "#61617c", opacity: ".33" }, drawing);
+    }
+    for (const crate of crates) {
+      for (const id of crate.dependencies) {
+        const a = positions.get(crate.id), b = positions.get(id);
+        const connected = crate.id === selected.id || id === selected.id;
+        svgElement("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: connected ? "wire hot" : "wire" }, drawing);
+      }
+    }
+    const ordered = [...crates].sort((a, b) => positions.get(a.id).depth - positions.get(b.id).depth);
+    for (const crate of ordered) {
+      const p = positions.get(crate.id);
+      const node = svgElement("g", { class: "graph-node", "data-id": crate.id, transform: "translate(" + p.x + " " + p.y + ")" }, drawing);
+      svgElement("circle", { r: 20, fill: "transparent" }, node);
+      if (crate.id === selected.id) {
+        svgElement("circle", { r: 15, fill: "none", stroke: colors[crate.group], "stroke-width": 1.7 }, node);
+      }
+      svgElement("circle", { r: 7 * p.scale, fill: colors[crate.group], class: "disc" }, node);
+      svgElement("text", { y: 26, "text-anchor": "middle", class: "graph-label" }, node).textContent = crate.name;
+    }
+    get("drawing").replaceChildren(drawing);
+  }
+
+  function list(element, items) {
+    element.replaceChildren();
+    if (!items.length) {
+      const item = document.createElement("li");
+      item.textContent = "None in this selection";
+      element.append(item);
+    }
+    for (const crate of items) {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = "#" + crate.id;
+      link.textContent = crate.name;
+      item.append(link);
+      element.append(item);
+    }
+  }
+
+  function renderSelection() {
+    const crate = byId.get(location.hash.slice(1)) ?? byId.get("reth-node-builder");
+    selected = crate;
+    picker.value = crate.id;
+    get("layer").textContent = crate.group;
+    get("name").textContent = crate.name;
+    get("package-name").textContent = crate.id;
+    get("description").textContent = crate.description;
+    get("manifest").href = crate.manifestUrl;
+    const dependencies = crate.dependencies.map(id => byId.get(id));
+    const dependents = crates.filter(other => other.dependencies.includes(crate.id));
+    list(get("dependencies"), dependencies);
+    list(get("dependents"), dependents);
+    get("response").textContent = JSON.stringify({ data: { crate: {
+      id: crate.id, manifestUrl: crate.manifestUrl, dependencies: dependencies.map(({ id }) => ({ id })),
+      dependents: dependents.map(({ id }) => ({ id }))
+    } } }, null, 2);
+    draw();
+  }
+
+  for (const crate of crates) picker.add(new Option(crate.name + " · " + crate.id, crate.id));
+  picker.addEventListener("change", () => { location.hash = picker.value; });
+  window.addEventListener("hashchange", () => {
+    if (location.hash === "#catalog") {
+      get("catalog").open = true;
+      return;
+    }
+    renderSelection();
+  });
+  document.querySelector('header a[href="#catalog"]').addEventListener("click", () => {
+    get("catalog").open = true;
+  });
+
+  function rotate(dx, dy) {
+    view.yaw += dx;
+    view.pitch = Math.max(-.65, Math.min(.65, view.pitch + dy));
+    draw();
+  }
+  get("left").addEventListener("click", () => rotate(-.18, 0));
+  get("right").addEventListener("click", () => rotate(.18, 0));
+  get("reset").addEventListener("click", () => { view = { ...home }; draw(); });
+  const steps = { ArrowLeft: [-.12, 0], ArrowRight: [.12, 0], ArrowUp: [0, -.08], ArrowDown: [0, .08] };
+  scene.addEventListener("keydown", event => {
+    if (event.key in steps) {
+      event.preventDefault();
+      rotate(...steps[event.key]);
+    }
+  });
+  scene.addEventListener("pointerdown", event => {
+    if (event.button !== 0 || !event.isPrimary) return;
+    pointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY,
+      x: event.clientX, y: event.clientY, crate: event.target.closest("[data-id]")?.dataset.id, moved: false };
+    scene.setPointerCapture(event.pointerId);
+  });
+  scene.addEventListener("pointermove", event => {
+    if (event.pointerId !== pointer?.id) return;
+    if (Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY) > 5) pointer.moved = true;
+    if (pointer.moved) rotate((event.clientX - pointer.x) * .008, (event.clientY - pointer.y) * .006);
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+  });
+  scene.addEventListener("pointerup", event => {
+    if (event.pointerId !== pointer?.id) return;
+    if (!pointer.moved && pointer.crate) location.hash = pointer.crate;
+    pointer = null;
+  });
+  scene.addEventListener("lostpointercapture", () => { pointer = null; });
+  get("download").addEventListener("click", () => {
+    const url = URL.createObjectURL(new Blob([get("response").textContent + "\n"], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = selected.id + "-dependencies.json";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  for (const row of document.querySelectorAll(".catalog > li")) row.removeAttribute("id");
+  renderSelection();
+  get("explorer").hidden = false;
+  get("query").hidden = false;
+  get("catalog").open = location.hash === "#catalog";
+})();
+</script>
+</body>
+</html>

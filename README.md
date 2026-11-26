@@ -12,6 +12,7 @@
 **[Install](https://reth.rs/installation/installation)**
 | [User Docs](https://reth.rs)
 | [Developer Docs](./docs)
+| [Crate atlas](./docs/repo/layout.md#project-layout)
 | [Crate Docs](https://reth.rs/docs)
 
 [gh-ci]: https://github.com/paradigmxyz/reth/actions/workflows/unit.yml

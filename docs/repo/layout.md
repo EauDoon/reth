@@ -1,5 +1,7 @@
 ## Project Layout
 
+The [Reth crate atlas](../vocs/public/crate-atlas/index.html) traces direct manifest dependencies between eleven crates in this fork. Open the HTML file in a browser to rotate the graph, follow dependencies in either direction, or download a selected crate’s local JSON response. The source-linked index also works with JavaScript disabled.
+
 This repository contains several Rust crates that implement the different building blocks of an Ethereum node. The high-level structure of the repository is as follows:
 
 Generally, reth is composed of a few components, with supporting crates. The main components can be defined as:
