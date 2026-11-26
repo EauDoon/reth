@@ -49,18 +49,27 @@ button:hover, select:hover { background: #323953; }
 .controls { padding: 8px 12px 12px; }
 .controls button { font-size: .83rem; }
 .legend { padding: 10px 16px; margin: 0; font-size: .77rem; gap: 14px; color: var(--muted); }
-.legend span::before { content:""; display:inline-block; margin-right:6px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+.legend .group::before { content:""; display:inline-block; margin-right:6px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
 .detail { padding: 18px; border-left: 1px solid var(--rule); overflow-wrap: anywhere; }
 .detail h2 { font-size: clamp(1.3rem, 2.2vw, 1.8rem); line-height: 1.15; letter-spacing: -.04em; margin: 10px 0 4px; }
 .detail p { font-size: .94rem; line-height: 1.5; color: var(--muted); }
 .detail h3 { font-size: .85rem; margin: 22px 0 5px; }
-.detail ul { margin: 0; padding-left: 1.2em; line-height: 1.8; font-size: .89rem; }
-.detail .tag { color: var(--ice); font-size: .8rem; }
+.detail ul { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 7px 0 0; padding: 0; font-size: .83rem; }
+.detail li a { display: inline-flex; align-items: center; min-height: 29px; padding: 3px 8px; color: var(--ink); border: 1px solid #49506a; border-radius: 5px; text-decoration: none; }
+.detail li a:hover { border-color: var(--ice); color: var(--ice); }
+.detail li:only-child { color: var(--muted); }
+.detail .tag { display: inline-flex; align-items: center; gap: 7px; color: var(--group-color, var(--muted)); font-size: .8rem; }
+.detail .tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.edge-key { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 0 16px; margin: 2px 0 6px; color: var(--muted); font: .79rem "SFMono-Regular", Consolas, monospace; }
+.edge-key span { display: inline-flex; align-items: center; gap: 7px; }
+.edge-key span::before { content: ""; width: 22px; border-top: 2px solid var(--ice); }
+.edge-key .incoming-key::before { border-top: 2px dashed var(--violet); }
 .graph-node { cursor: pointer; }
 .graph-label { font: 600 14px system-ui,sans-serif; fill: #f3f2fa; paint-order: stroke; stroke: #181b2d; stroke-width: 4px; stroke-linejoin: round; }
 #scene .disc { stroke: #141928; stroke-width: 2px; }
 #scene .wire { fill: none; stroke-width: 1.2; stroke: #8089a8; opacity: .26; }
-#scene .wire.hot { stroke: var(--ice); opacity: .9; stroke-width: 1.9; }
+#scene .wire.outgoing { stroke: var(--ice); opacity: .95; stroke-width: 1.8; }
+#scene .wire.incoming { stroke: var(--violet); opacity: .95; stroke-dasharray: 4 3; stroke-width: 1.8; }
 details { margin-top: 18px; border: 1px solid var(--rule); border-radius: 10px; padding: 13px 16px; }
 summary { cursor: pointer; font-weight: 600; line-height: 1.6; }
 details p { color: var(--muted); line-height: 1.5; }
@@ -84,7 +93,12 @@ footer { margin-top: 28px; }
   select { width: 100%; min-width: 0; }
   .legend { gap: 10px; }
   .catalog > li { grid-template-columns: 1fr; gap: 4px; }
-  .graph-label { font-size: 17px; }
+  .intro { font-size: 1rem; }
+  .tools { display: grid; grid-template-columns: auto minmax(0,1fr); width: 100%; }
+  .toolbar { gap: 4px; padding: 10px 14px; }
+  .legend { padding: 10px 14px 0; }
+  .edge-key { padding: 0 14px; }
+  .graph-label { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
@@ -98,13 +112,14 @@ footer { margin-top: 28px; }
   <a href="#catalog">Crate index ↓</a>
 </header>
 <h1>Reth <em>crate atlas.</em></h1>
-<p class="intro">Trace direct Rust dependencies from the command-line entry point to the Ethereum node, its services and its storage interfaces.</p>
+<p class="intro">Follow the Rust crates that connect the Ethereum node to its services and storage.</p>
 <section class="explorer" id="explorer" hidden aria-label="Interactive crate explorer">
   <div class="toolbar"><div class="tools"><label for="picker">Inspect a crate</label><select id="picker"></select></div><span class="meta">11 crates · 29 dependencies</span></div>
   <div class="layout">
     <div class="visual">
-      <p class="legend"><span style="--accent:var(--violet)">Assembly</span><span style="--accent:var(--coral)">Services</span><span style="--accent:var(--ice)">State</span></p>
+      <p class="legend"><span class="group" style="--accent:var(--violet)">Assembly</span><span class="group" style="--accent:var(--coral)">Services</span><span class="group" style="--accent:var(--ice)">State</span></p>
       <svg id="scene" viewBox="0 0 640 360" role="img" tabindex="0" aria-label="3D crate dependencies. Drag or use arrow keys to rotate. Use the crate selector to inspect a node."><g id="drawing"></g></svg>
+      <p class="edge-key" aria-label="Connections to the selected crate"><span class="outgoing-key">Depends on</span><span class="incoming-key">Used by</span></p>
       <div class="controls" role="group" aria-label="Graph view"><button type="button" id="left" aria-label="Rotate left">↶ Left</button><button type="button" id="right" aria-label="Rotate right">Right ↷</button><button type="button" id="reset">Reset view</button></div>
     </div>
     <aside class="detail" aria-label="Selected crate">
@@ -198,7 +213,8 @@ footer { margin-top: 28px; }
   const colors = { Assembly: "#c2b4ff", Services: "#ffb293", State: "#8edfd7" };
   const scene = get("scene");
   const picker = get("picker");
-  const home = { yaw: -.08, pitch: .12 };
+  const portrait = window.matchMedia("(max-width: 540px)");
+  const home = { yaw: -.08, pitch: -.22 };
   let view = { ...home };
   let selected;
   let pointer;
@@ -217,27 +233,82 @@ footer { margin-top: 28px; }
     const vertical = y * Math.cos(view.pitch) - depth * Math.sin(view.pitch);
     const distance = depth * Math.cos(view.pitch) + y * Math.sin(view.pitch);
     const scale = 810 / (810 - distance);
-    return { x: 320 + lateral * scale, y: 165 + vertical * scale, scale, depth: distance };
+    const cx = portrait.matches ? 160 : 320;
+    const cy = portrait.matches ? 166 : 157;
+    return { x: cx + lateral * scale, y: cy + vertical * scale, scale, depth: distance };
+  }
+
+  // Lay out labels in projected coordinates after each turn. Place the selected
+  // label first, then the nearer crates, keeping names inside the graph.
+  function placeLabels(positions) {
+    const bounds = scene.viewBox.baseVal;
+    const occupied = [...positions.values()].map(({ x, y }) =>
+      ({ left: x - 8, right: x + 8, top: y - 8, bottom: y + 8 }));
+    const labels = [...get("drawing").querySelectorAll(".graph-label")].reverse().map(text => {
+      const id = text.parentElement.dataset.id;
+      return { text, id, size: text.getBBox(), point: positions.get(id) };
+    });
+    labels.sort((a, b) => Number(b.id === selected.id) - Number(a.id === selected.id));
+    for (const { text, size, point } of labels) {
+      const half = size.width / 2 + 2;
+      const side = half + 11;
+      let best, lowest = Infinity;
+      for (const [dx, dy] of [[0, 0], [0, -41], [side, -18], [-side, -18],
+        [side, 3], [-side, 3], [0, 25], [0, -66], [side, 24], [-side, 24],
+        [side, -46], [-side, -46], [0, 48], [0, -89]]) {
+        const x = Math.min(bounds.width - half - 3, Math.max(half + 3, point.x + dx));
+        const y = Math.min(bounds.height - size.height - 3, Math.max(3, point.y + size.y + dy));
+        const box = { left: x - half, right: x + half, top: y - 1, bottom: y + size.height + 1 };
+        let overlap = 0;
+        for (const r of occupied) {
+          overlap += Math.max(0, Math.min(box.right, r.right) - Math.max(box.left, r.left)) *
+            Math.max(0, Math.min(box.bottom, r.bottom) - Math.max(box.top, r.top));
+        }
+        if (overlap < lowest) {
+          lowest = overlap;
+          best = { box, dx: x - point.x, dy: y - point.y - size.y };
+        }
+        if (!overlap) break;
+      }
+      occupied.push(best.box);
+      text.setAttribute("transform", "translate(" + best.dx + " " + best.dy + ")");
+      if (Math.abs(best.dx) > 5 || Math.abs(best.dy) > 5) {
+        const x = Math.min(best.box.right, Math.max(best.box.left, point.x)) - point.x;
+        const y = Math.min(best.box.bottom, Math.max(best.box.top, point.y)) - point.y;
+        const leader = svgElement("line", { x1: 0, y1: 0, x2: x, y2: y, stroke: "#8993ac", "stroke-width": 1 }, text.parentElement);
+        text.parentElement.prepend(leader);
+      }
+    }
   }
 
   function draw() {
     const drawing = document.createDocumentFragment();
-    const positions = new Map(crates.map(crate => [crate.id, project(crate.coordinates)]));
+    scene.setAttribute("viewBox", portrait.matches ? "0 0 320 355" : "0 0 640 360");
+    const positions = new Map(crates.map(crate => {
+      const [x, y, z] = crate.coordinates;
+      const point = portrait.matches ? [x * .51, y * 1.06, z * .55] : crate.coordinates;
+      return [crate.id, project(point)];
+    }));
     for (const radius of [80, 152, 223]) {
       const points = Array.from({ length: 73 }, (_, index) => {
         const theta = index * Math.PI / 36;
-        const p = project([radius * Math.cos(theta), 95, radius * Math.sin(theta)]);
+        const r = portrait.matches ? radius * .54 : radius;
+        const p = project([r * Math.cos(theta), 105, r * Math.sin(theta)]);
         return p.x + "," + p.y;
       });
       svgElement("polyline", { points: points.join(" "), fill: "none", stroke: "#61617c", opacity: ".33" }, drawing);
     }
+    const highlights = document.createDocumentFragment();
     for (const crate of crates) {
       for (const id of crate.dependencies) {
         const a = positions.get(crate.id), b = positions.get(id);
-        const connected = crate.id === selected.id || id === selected.id;
-        svgElement("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: connected ? "wire hot" : "wire" }, drawing);
+        let relation = "";
+        if (crate.id === selected.id) relation = "outgoing";
+        if (id === selected.id) relation = "incoming";
+        svgElement("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "wire " + relation }, relation ? highlights : drawing);
       }
     }
+    drawing.append(highlights);
     const ordered = [...crates].sort((a, b) => positions.get(a.id).depth - positions.get(b.id).depth);
     for (const crate of ordered) {
       const p = positions.get(crate.id);
@@ -247,9 +318,10 @@ footer { margin-top: 28px; }
         svgElement("circle", { r: 15, fill: "none", stroke: colors[crate.group], "stroke-width": 1.7 }, node);
       }
       svgElement("circle", { r: 7 * p.scale, fill: colors[crate.group], class: "disc" }, node);
-      svgElement("text", { y: 26, "text-anchor": "middle", class: "graph-label" }, node).textContent = crate.name;
+      svgElement("text", { y: portrait.matches ? 21 : 26, "text-anchor": "middle", class: "graph-label" }, node).textContent = crate.name;
     }
     get("drawing").replaceChildren(drawing);
+    placeLabels(positions);
   }
 
   function list(element, items) {
@@ -274,6 +346,7 @@ footer { margin-top: 28px; }
     selected = crate;
     picker.value = crate.id;
     get("layer").textContent = crate.group;
+    get("layer").style.setProperty("--group-color", colors[crate.group]);
     get("name").textContent = crate.name;
     get("package-name").textContent = crate.id;
     get("description").textContent = crate.description;
@@ -289,7 +362,8 @@ footer { margin-top: 28px; }
     draw();
   }
 
-  for (const crate of crates) picker.add(new Option(crate.name + " · " + crate.id, crate.id));
+  portrait.addEventListener("change", draw);
+  for (const crate of crates) picker.add(new Option(crate.name, crate.id));
   picker.addEventListener("change", () => { location.hash = picker.value; });
   window.addEventListener("hashchange", () => {
     if (location.hash === "#catalog") {
@@ -345,8 +419,8 @@ footer { margin-top: 28px; }
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
   for (const row of document.querySelectorAll(".catalog > li")) row.removeAttribute("id");
-  renderSelection();
   get("explorer").hidden = false;
+  renderSelection();
   get("query").hidden = false;
   get("catalog").open = location.hash === "#catalog";
 })();
