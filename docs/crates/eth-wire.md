@@ -126,38 +126,12 @@ pub struct Transactions<T = TransactionSigned>(
 );
 ```
 
-And the corresponding transaction type is defined here:
+The default transaction type is an Alloy envelope. The Ethereum primitives crate declares the alias in [`crates/ethereum/primitives/src/lib.rs`](../../crates/ethereum/primitives/src/lib.rs).
 
-[File: crates/ethereum/primitives/src/transaction.rs](../../crates/ethereum/primitives/src/transaction.rs)
-```rust, ignore
-#[reth_codec]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, AsRef, Deref, Default, Serialize, Deserialize)]
-pub struct TransactionSigned {
-    pub hash: TxHash,
-    pub signature: Signature,
-    #[deref]
-    #[as_ref]
-    pub transaction: Transaction,
-}
-
-impl Encodable for TransactionSigned {
-    fn encode(&self, out: &mut dyn bytes::BufMut) {
-        self.encode_inner(out, true);
-    }
-
-    fn length(&self) -> usize {
-        let len = self.payload_len();
-        len + length_of_length(len)
-    }
-}
-
-impl Decodable for TransactionSigned {
-    fn decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
-        // Implementation omitted for brevity
-        //...
-    }
-}
+```rust,ignore
+pub type TransactionSigned = alloy_consensus::EthereumTxEnvelope<TxEip4844>;
 ```
+
 Now that we know how the types work, let's take a look at how these are utilized in the network.
 
 ## P2PStream
